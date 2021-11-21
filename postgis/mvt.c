@@ -832,10 +832,18 @@ mvt_unsafe_clip_by_box(LWGEOM *lwg_in, GBOX *clip_box)
 		return lwg_in;
 	}
 
-	geom_clipped = lwgeom_clip_by_rect(lwg_in, clip_box->xmin, clip_box->ymin, clip_box->xmax, clip_box->ymax);
-	if (!geom_clipped || lwgeom_is_empty(geom_clipped))
+	// geom_clipped = lwgeom_clip_by_rect(lwg_in, clip_box->xmin, clip_box->ymin, clip_box->xmax, clip_box->ymax);
+	// if (!geom_clipped || lwgeom_is_empty(geom_clipped))
+	// 	return NULL;
+	// return geom_clipped;
+	// return NULL;
+
+	geom_clipped = (LWGEOM *)lwgeom_clip_to_ordinate_range(lwg_in, 'X', clip_box->xmin, clip_box->xmax, 0);
+	geom_clipped = (LWGEOM *)lwgeom_clip_to_ordinate_range(lwg_in, 'Y', clip_box->ymin, clip_box->ymax, 0);
+	if (lwgeom_is_empty(geom_clipped))
 		return NULL;
-	return geom_clipped;
+
+	return lwgeom_homogenize(geom_clipped);
 }
 
 /* Clips a geometry for MVT using GEOS.
