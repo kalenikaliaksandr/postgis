@@ -839,7 +839,7 @@ mvt_unsafe_clip_by_box(LWGEOM *lwg_in, GBOX *clip_box)
 	// return NULL;
 
 	geom_clipped = (LWGEOM *)lwgeom_clip_to_ordinate_range(lwg_in, 'X', clip_box->xmin, clip_box->xmax, 0);
-	geom_clipped = (LWGEOM *)lwgeom_clip_to_ordinate_range(lwg_in, 'Y', clip_box->ymin, clip_box->ymax, 0);
+	geom_clipped = (LWGEOM *)lwgeom_clip_to_ordinate_range(geom_clipped, 'Y', clip_box->ymin, clip_box->ymax, 0);
 	if (lwgeom_is_empty(geom_clipped))
 		return NULL;
 
