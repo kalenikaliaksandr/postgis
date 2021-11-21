@@ -675,9 +675,9 @@ lwline_clip_to_ordinate_range(const LWLINE *line, char ordinate, double from, do
 				 *  and set the overall output type to a generic collection. */
 				if (dp->npoints == 1)
 				{
-					LWPOINT *opoint = lwpoint_construct(line->srid, NULL, dp);
-					lwgeom_out->type = COLLECTIONTYPE;
-					lwgeom_out = lwcollection_add_lwgeom(lwgeom_out, lwpoint_as_lwgeom(opoint));
+					// LWPOINT *opoint = lwpoint_construct(line->srid, NULL, dp);
+					// lwgeom_out->type = COLLECTIONTYPE;
+					// lwgeom_out = lwcollection_add_lwgeom(lwgeom_out, lwpoint_as_lwgeom(opoint));
 				}
 				else
 				{
@@ -697,9 +697,9 @@ lwline_clip_to_ordinate_range(const LWLINE *line, char ordinate, double from, do
 	{
 		if (dp->npoints == 1)
 		{
-			LWPOINT *opoint = lwpoint_construct(line->srid, NULL, dp);
-			lwgeom_out->type = COLLECTIONTYPE;
-			lwgeom_out = lwcollection_add_lwgeom(lwgeom_out, lwpoint_as_lwgeom(opoint));
+			// LWPOINT *opoint = lwpoint_construct(line->srid, NULL, dp);
+			// lwgeom_out->type = COLLECTIONTYPE;
+			// lwgeom_out = lwcollection_add_lwgeom(lwgeom_out, lwpoint_as_lwgeom(opoint));
 		}
 		else if (dp->npoints > 1)
 		{
