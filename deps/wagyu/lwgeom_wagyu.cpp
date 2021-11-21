@@ -43,16 +43,16 @@ using wagyu_point = mapbox::geometry::point<wagyu_coord_type>;
 using wagyu_box = mapbox::geometry::box<wagyu_coord_type>;
 
 static wagyu_linearring
-ptarray_to_wglinearring(const POINTARRAY *pa, const wagyu_box &tile)
+ptarray_to_wglinearring(const POINTARRAY *pa)
 {
 	wagyu_linearring lr;
 	lr.reserve(pa->npoints);
 
 	/* We calculate the bounding box of the point array */
-	wagyu_coord_type min_x = std::numeric_limits<wagyu_coord_type>::max();
-	wagyu_coord_type max_x = std::numeric_limits<wagyu_coord_type>::min();
-	wagyu_coord_type min_y = min_x;
-	wagyu_coord_type max_y = max_x;
+	// wagyu_coord_type min_x = std::numeric_limits<wagyu_coord_type>::max();
+	// wagyu_coord_type max_x = std::numeric_limits<wagyu_coord_type>::min();
+	// wagyu_coord_type min_y = min_x;
+	// wagyu_coord_type max_y = max_x;
 
 	size_t point_size = ptarray_point_size(pa);
 	size_t pa_size = pa->npoints;
@@ -62,62 +62,69 @@ ptarray_to_wglinearring(const POINTARRAY *pa, const wagyu_box &tile)
 		const wagyu_coord_type x = static_cast<wagyu_coord_type>(*(double*) buffer);
 		const wagyu_coord_type y = static_cast<wagyu_coord_type>(((double*) buffer)[1]);
 		buffer += point_size;
-		min_x = std::min(min_x, x);
-		max_x = std::max(max_x, x);
-		min_y = std::min(min_y, y);
-		max_y = std::max(max_y, y);
+		// min_x = std::min(min_x, x);
+		// max_x = std::max(max_x, x);
+		// min_y = std::min(min_y, y);
+		// max_y = std::max(max_y, y);
 
 		lr.emplace_back(static_cast<wagyu_coord_type>(x), static_cast<wagyu_coord_type>(y));
 	}
 
 	/* Check how many sides of the calculated box are inside the tile */
-	uint32_t sides_in = 0;
-	sides_in += min_x >= tile.min.x && min_x <= tile.max.x;
-	sides_in += max_x >= tile.min.x && max_x <= tile.max.x;
-	sides_in += min_y >= tile.min.y && min_y <= tile.max.y;
-	sides_in += max_y >= tile.min.y && max_y <= tile.max.y;
+	// uint32_t sides_in = 0;
+	// sides_in += min_x >= tile.min.x && min_x <= tile.max.x;
+	// sides_in += max_x >= tile.min.x && max_x <= tile.max.x;
+	// sides_in += min_y >= tile.min.y && min_y <= tile.max.y;
+	// sides_in += max_y >= tile.min.y && max_y <= tile.max.y;
 
 	/* With 0 sides in, the box it's either outside or covers the tile completely */
-	if ((sides_in == 0) && (min_x > tile.max.x || max_x < tile.min.x || min_y > tile.max.y || max_y < tile.min.y))
-	{
+	// if ((sides_in == 0) && (min_x > tile.max.x || max_x < tile.min.x || min_y > tile.max.y || max_y < tile.min.y))
+	// {
 		/* No overlapping: Return an empty linearring */
-		return wagyu_linearring();
-	}
+		// return wagyu_linearring();
+	// }
 
-	if (sides_in != 4)
-	{
+	// if (sides_in != 4)
+	// {
 		/* Some edges need to be clipped */
-		return mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, tile);
-	}
+		// return mapbox::geometry::wagyu::quick_clip::quick_lr_clip(lr, tile);
+	// }
 
 	/* All points are inside the box */
 	return lr;
 }
 
 static vwpolygon
-lwpoly_to_vwgpoly(const LWPOLY *geom, const wagyu_box &box)
+lwpoly_to_vwgpoly(const LWPOLY *g, const GBOX *box)
 {
+	LWCOLLECTION *col = lwgeom_clip_to_ordinate_range((LWGEOM *)g, 'X', box->xmin, box->xmax, 0);
+	col = lwgeom_clip_to_ordinate_range((LWGEOM *)col, 'Y', box->ymin, box->ymax, 0);
+
 	vwpolygon vp;
+	for (std::uint32_t j = 0; j < col->ngeoms; j++)
+	{
+	LWPOLY *geom = (LWPOLY *)col->geoms[j];
 	for (std::uint32_t i = 0; i < geom->nrings; i++)
 	{
 		wagyu_polygon pol;
-		pol.push_back(ptarray_to_wglinearring(geom->rings[i], box));
+		pol.push_back(ptarray_to_wglinearring(geom->rings[i]));
 
 		/* If it has an inner ring, push it too */
 		i++;
 		if (i != geom->nrings)
 		{
-			pol.push_back(ptarray_to_wglinearring(geom->rings[i], box));
+			pol.push_back(ptarray_to_wglinearring(geom->rings[i]));
 		}
 
 		vp.push_back(pol);
+	}
 	}
 
 	return vp;
 }
 
 static vwpolygon
-lwmpoly_to_vwgpoly(const LWMPOLY *geom, const wagyu_box &box)
+lwmpoly_to_vwgpoly(const LWMPOLY *geom, const GBOX *box)
 {
 	vwpolygon vp;
 	for (std::uint32_t i = 0; i < geom->ngeoms; i++)
@@ -139,7 +146,7 @@ lwmpoly_to_vwgpoly(const LWMPOLY *geom, const wagyu_box &box)
  * previous rings)
  */
 static vwpolygon
-lwgeom_to_vwgpoly(const LWGEOM *geom, const wagyu_box &box)
+lwgeom_to_vwgpoly(const LWGEOM *geom, const GBOX *box)
 {
 	switch (geom->type)
 	{
@@ -227,12 +234,12 @@ __lwgeom_wagyu_clip_by_box(const LWGEOM *geom, const GBOX *bbox)
 		return out;
 	}
 
-	wagyu_point box_min(std::min(bbox->xmin, bbox->xmax), std::min(bbox->ymin, bbox->ymax));
-	wagyu_point box_max(std::max(bbox->xmin, bbox->xmax), std::max(bbox->ymin, bbox->ymax));
-	const wagyu_box box(box_min, box_max);
+	// wagyu_point box_min(std::min(bbox->xmin, bbox->xmax), std::min(bbox->ymin, bbox->ymax));
+	// wagyu_point box_max(std::max(bbox->xmin, bbox->xmax), std::max(bbox->ymin, bbox->ymax));
+	// const wagyu_box box(box_min, box_max);
 
 	wagyu_multipolygon solution;
-	vwpolygon vpsubject = lwgeom_to_vwgpoly(geom, box);
+	vwpolygon vpsubject = lwgeom_to_vwgpoly(geom, bbox);
 	if (vpsubject.size() == 0)
 	{
 		LWGEOM *out = lwgeom_construct_empty(MULTIPOLYGONTYPE, geom->srid, 0, 0);
