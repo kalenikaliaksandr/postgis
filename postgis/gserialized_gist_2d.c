@@ -81,6 +81,7 @@ Datum gserialized_gist_consistent_2d(PG_FUNCTION_ARGS);
 Datum gserialized_gist_compress_2d(PG_FUNCTION_ARGS);
 Datum gserialized_gist_decompress_2d(PG_FUNCTION_ARGS);
 Datum gserialized_gist_penalty_2d(PG_FUNCTION_ARGS);
+Datum gserialized_gist_choosesubtree_2d(PG_FUNCTION_ARGS);
 Datum gserialized_gist_picksplit_2d(PG_FUNCTION_ARGS);
 Datum gserialized_gist_union_2d(PG_FUNCTION_ARGS);
 Datum gserialized_gist_same_2d(PG_FUNCTION_ARGS);
@@ -1264,6 +1265,40 @@ Datum gserialized_gist_penalty_2d(PG_FUNCTION_ARGS)
 
 	if (b1 && b2 && !box2df_is_empty(b1) && !box2df_is_empty(b2))
 		*result = box2df_penalty(b1, b2);
+
+	PG_RETURN_POINTER(result);
+}
+
+PG_FUNCTION_INFO_V1(gserialized_gist_choosesubtree_2d);
+Datum gserialized_gist_choosesubtree_2d(PG_FUNCTION_ARGS)
+{
+	GistEntryVector	*entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+	GISTENTRY *newentry = (GISTENTRY *) PG_GETARG_POINTER(1);
+	OffsetNumber *result = (OffsetNumber *) PG_GETARG_POINTER(2);
+	int i;
+	float best_penalty = -1;
+	BOX2DF *box_cur, *box_add;
+
+	*result = FirstOffsetNumber;
+	box_add = (BOX2DF *) DatumGetPointer(newentry->key);
+	for (i = 0; i < entryvec->n; i++)
+	{
+		float penalty;
+
+		box_cur = (BOX2DF *) DatumGetPointer(entryvec->vector[i].key);
+		penalty = box2df_penalty(box_cur, box_add);
+
+		if (best_penalty < 0 || penalty < best_penalty)
+		{
+			best_penalty = penalty;
+			*result = entryvec->vector[i].offset;
+		}
+
+		if (best_penalty == 0)
+		{
+			break;
+		}
+	}
 
 	PG_RETURN_POINTER(result);
 }

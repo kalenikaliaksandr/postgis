@@ -488,6 +488,11 @@ CREATE OR REPLACE FUNCTION geometry_gist_penalty_2d(internal,internal,internal)
 	AS 'MODULE_PATHNAME' ,'gserialized_gist_penalty_2d'
 	LANGUAGE 'c' PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION geometry_gist_choosesubtree_2d(internal,internal,internal)
+	RETURNS internal
+	AS 'MODULE_PATHNAME' ,'gserialized_gist_choosesubtree_2d'
+	LANGUAGE 'c' PARALLEL SAFE;
+
 -- Availability: 2.0.0
 CREATE OR REPLACE FUNCTION geometry_gist_picksplit_2d(internal, internal)
 	RETURNS internal
@@ -826,7 +831,8 @@ CREATE OPERATOR CLASS gist_geometry_ops_2d
 	FUNCTION        4        geometry_gist_decompress_2d (internal),
 	FUNCTION        5        geometry_gist_penalty_2d (internal, internal, internal),
 	FUNCTION        6        geometry_gist_picksplit_2d (internal, internal),
-	FUNCTION        7        geometry_gist_same_2d (geom1 geometry, geom2 geometry, internal);
+	FUNCTION        7        geometry_gist_same_2d (geom1 geometry, geom2 geometry, internal),
+	FUNCTION        12       geometry_gist_choosesubtree_2d (internal, internal, internal);
 
 -----------------------------------------------------------------------------
 -- GiST ND GEOMETRY-over-GSERIALIZED
