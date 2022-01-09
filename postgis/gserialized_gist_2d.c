@@ -1269,18 +1269,52 @@ Datum gserialized_gist_penalty_2d(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(result);
 }
 
+static int
+gistentry_cmp_penalty(const void *e1, const void *e2, void *q)
+{
+	BOX2DF *b1 = (BOX2DF *) DatumGetPointer(((GISTENTRY *)e1)->key);
+	BOX2DF *b2 = (BOX2DF *) DatumGetPointer(((GISTENTRY *)e2)->key);
+	BOX2DF *add = (BOX2DF *)q;
+
+	return box2df_penalty(b1, add) > box2df_penalty(b2, add) ? 1 : -1;
+}
+
+static inline float
+box2df_intersection_area(const BOX2DF *b1, const BOX2DF *b2)
+{
+	float dx = Min(b1->xmax, b2->xmax) - Max(b1->xmin, b2->xmin);
+	float dy = Min(b1->ymax, b2->ymax) - Max(b1->ymin, b2->ymin);
+
+	return (dx >= 0.0f && dy >= 0.0f) ? dx * dy : 0.0f;
+}
+
+static void
+box2df_union(BOX2DF *b1, const BOX2DF *b2)
+{
+	b1->xmin = Min(b1->xmin, b2->xmin);
+	b1->ymin = Min(b1->ymin, b2->ymin);
+	b1->xmax = Max(b1->xmax, b2->xmax);
+	b1->ymax = Max(b1->ymax, b2->ymax);
+}
+
 PG_FUNCTION_INFO_V1(gserialized_gist_choosesubtree_2d);
 Datum gserialized_gist_choosesubtree_2d(PG_FUNCTION_ARGS)
 {
 	GistEntryVector	*entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	GISTENTRY *newentry = (GISTENTRY *) PG_GETARG_POINTER(1);
 	OffsetNumber *result = (OffsetNumber *) PG_GETARG_POINTER(2);
-	int i;
-	float best_penalty = -1;
-	BOX2DF *box_cur, *box_add;
 
-	*result = FirstOffsetNumber;
+	int i;
+	BOX2DF *box_cur, *box_add;
+	bool success;
+	int p;
+	int CAND_pointer;
+	int CAND_length;
+
 	box_add = (BOX2DF *) DatumGetPointer(newentry->key);
+
+	success = false;
+
 	for (i = 0; i < entryvec->n; i++)
 	{
 		float penalty;
@@ -1288,15 +1322,110 @@ Datum gserialized_gist_choosesubtree_2d(PG_FUNCTION_ARGS)
 		box_cur = (BOX2DF *) DatumGetPointer(entryvec->vector[i].key);
 		penalty = box2df_penalty(box_cur, box_add);
 
-		if (best_penalty < 0 || penalty < best_penalty)
+		if (penalty == 0)
 		{
-			best_penalty = penalty;
 			*result = entryvec->vector[i].offset;
+			success = true;
+		}
+	}
+
+	if (!success)
+	{
+		qsort_arg(&entryvec->vector, entryvec->n,
+				sizeof(GISTENTRY), gistentry_cmp_penalty,
+				(void *) box_add);
+
+		int *CAND = (int *)palloc(1024 * sizeof(int));
+		float *delta_ovlp = (float *)palloc(1024 * sizeof(float));
+
+		CAND[0] = 0;
+		p = 0;
+		for (i = 1; i < entryvec->n; i++)
+		{
+			float temp_bef, temp_aft, temp;
+			BOX2DF *t_box, *j_box;
+
+			t_box = box2df_copy((BOX2DF *)DatumGetPointer(entryvec->vector[0].key));
+			j_box = box2df_copy((BOX2DF *)DatumGetPointer(entryvec->vector[i].key));
+
+			temp_bef = box2df_intersection_area(t_box, j_box);
+			box2df_union(t_box, box_add);
+			temp_aft = box2df_intersection_area(t_box, j_box);
+
+			temp = temp_aft - temp_bef;
+
+			if (temp > FLT_EPSILON)
+			{
+				p = i;
+			}
 		}
 
-		if (best_penalty == 0)
+		p = entryvec->n - 1;
+
+		CAND_pointer = 0;
+		CAND_length = 1;
+
+		while (CAND_pointer < CAND_length)
 		{
-			break;
+			int t = CAND[CAND_pointer];
+			
+			delta_ovlp[t] = 0.0f;
+			for (int j = 0; j <= p; j++)
+			{
+				float temp_bef, temp_aft, temp;
+				BOX2DF *t_box, *j_box;
+
+				if (j == t) continue;
+
+				t_box = box2df_copy((BOX2DF *)DatumGetPointer(entryvec->vector[t].key));
+				j_box = box2df_copy((BOX2DF *)DatumGetPointer(entryvec->vector[j].key));
+
+				temp_bef = box2df_intersection_area(t_box, j_box);
+				box2df_union(t_box, box_add);
+				temp_aft = box2df_intersection_area(t_box, j_box);
+
+				temp = temp_aft - temp_bef;
+
+				delta_ovlp[t] += temp;
+
+				if (temp > FLT_EPSILON)
+				{
+					int k;
+					for (k = 0; k < CAND_length; k++)
+					{
+						if (CAND[k] == j) break;
+					}
+					if (k == CAND_length)
+					{
+						CAND[CAND_length] = j;
+						CAND_length += 1;
+					}
+				}
+			}
+
+			if (delta_ovlp[t] < FLT_EPSILON)
+			{
+				*result = entryvec->vector[t].offset;
+				success = true;
+				break;
+			}
+
+			CAND_pointer += 1;
+		}
+
+		if (!success)
+		{
+			float min;
+			
+			min = FLT_MAX;
+			for (i = 0; i < CAND_length; i++)
+			{
+				int u = CAND[i];
+				if (delta_ovlp[u] < min) {
+					min = delta_ovlp[u];
+					*result = entryvec->vector[u].offset;
+				}
+			}
 		}
 	}
 
