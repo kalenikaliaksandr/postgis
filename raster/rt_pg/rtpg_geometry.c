@@ -1158,10 +1158,10 @@ Datum RASTER_asRaster_ref(PG_FUNCTION_ARGS)
 	___fcinfo->args[0].value = PG_GETARG_DATUM(0);
 	___fcinfo->args[0].isnull = PG_ARGISNULL(0);
 	// 1
-	___fcinfo->args[1].value = scaleX;
+	___fcinfo->args[1].value = Float8GetDatum(scaleX);
 	___fcinfo->args[1].isnull = false;
 	// 2
-	___fcinfo->args[2].value = scaleY;
+	___fcinfo->args[2].value = Float8GetDatum(scaleY);
 	___fcinfo->args[2].isnull = false;
 	// 3
 	___fcinfo->args[3].value = (Datum)0;
@@ -1185,16 +1185,16 @@ Datum RASTER_asRaster_ref(PG_FUNCTION_ARGS)
 	___fcinfo->args[9].value = (Datum)0;
 	___fcinfo->args[9].isnull = true;
 	// 10
-	___fcinfo->args[10].value = ipX;
+	___fcinfo->args[10].value = Float8GetDatum(ipX);
 	___fcinfo->args[10].isnull = false;
 	// 11
-	___fcinfo->args[11].value = ipY;
+	___fcinfo->args[11].value = Float8GetDatum(ipY);
 	___fcinfo->args[11].isnull = false;
 	// 12
-	___fcinfo->args[12].value = skewX;
+	___fcinfo->args[12].value = Float8GetDatum(skewX);
 	___fcinfo->args[12].isnull = false;
 	// 13
-	___fcinfo->args[13].value = skewY;
+	___fcinfo->args[13].value = Float8GetDatum(skewY);
 	___fcinfo->args[13].isnull = false;
 	// 14
 	___fcinfo->args[14].value = PG_GETARG_DATUM(5);
