@@ -1146,6 +1146,8 @@ Datum RASTER_asRaster_ref(PG_FUNCTION_ARGS)
 	scaleX = rt_raster_get_x_scale(raster_ref);
 	scaleY = rt_raster_get_y_scale(raster_ref);
 
+	elog(NOTICE, "scaleX: %f scaleY: %f", scaleX, scaleY);
+
 	/* skew x, y */
 	skewX = rt_raster_get_x_skew(raster_ref);
 	skewY = rt_raster_get_y_skew(raster_ref);
