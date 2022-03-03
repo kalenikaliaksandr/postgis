@@ -1129,7 +1129,7 @@ Datum RASTER_asRaster_ref(PG_FUNCTION_ARGS)
 	pgraster_ref = (rt_pgraster *)PG_DETOAST_DATUM(PG_GETARG_DATUM(1));
 	raster_ref = rt_raster_deserialize(pgraster_ref, TRUE);
 	if (!raster_ref) {
-		PG_FREE_IF_COPY(pgraster, 0);
+		PG_FREE_IF_COPY(pgraster_ref, 0);
 		elog(ERROR, "RASTER_metadata; Could not deserialize raster");
 		PG_RETURN_NULL();
 	}
