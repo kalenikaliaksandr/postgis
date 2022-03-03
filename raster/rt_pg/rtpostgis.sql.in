@@ -1948,6 +1948,44 @@ CREATE OR REPLACE FUNCTION st_asraster(
 	AS $$ SELECT @extschema@._ST_asraster($1, NULL, NULL, $2, $3, ARRAY[$4]::text[], ARRAY[$5]::double precision[], ARRAY[$6]::double precision[], $7, $8, NULL, NULL,$9, $10, $11) $$
 	LANGUAGE 'sql' IMMUTABLE PARALLEL SAFE;
 
+-- CREATE OR REPLACE FUNCTION st_asraster(
+-- 	geom geometry,
+-- 	ref raster,
+-- 	pixeltype text[] DEFAULT ARRAY['8BUI']::text[],
+-- 	value double precision[] DEFAULT ARRAY[1]::double precision[],
+-- 	nodataval double precision[] DEFAULT ARRAY[0]::double precision[],
+-- 	touched boolean DEFAULT FALSE
+-- )
+-- 	RETURNS raster
+-- 	AS $$
+-- 	DECLARE
+-- 		g @extschema@.geometry;
+-- 		g_srid integer;
+-- 
+-- 		ul_x double precision;
+-- 		ul_y double precision;
+-- 		scale_x double precision;
+-- 		scale_y double precision;
+-- 		skew_x double precision;
+-- 		skew_y double precision;
+-- 		sr_id integer;
+-- 	BEGIN
+-- 		SELECT upperleftx, upperlefty, scalex, scaley, skewx, skewy, srid INTO ul_x, ul_y, scale_x, scale_y, skew_x, skew_y, sr_id FROM @extschema@.ST_Metadata(ref);
+-- 		--RAISE NOTICE '%, %, %, %, %, %, %', ul_x, ul_y, scale_x, scale_y, skew_x, skew_y, sr_id;
+-- 
+-- 		-- geometry and raster has different SRID
+-- 		g_srid := @extschema@.ST_SRID(geom);
+-- 		IF g_srid != sr_id THEN
+-- 			RAISE NOTICE 'The geometry''s SRID (%) is not the same as the raster''s SRID (%).  The geometry will be transformed to the raster''s projection', g_srid, sr_id;
+-- 			g := @extschema@.ST_Transform(geom, sr_id);
+-- 		ELSE
+-- 			g := geom;
+-- 		END IF;
+-- 
+-- 		RETURN @extschema@._ST_asraster(g, scale_x, scale_y, NULL, NULL, $3, $4, $5, NULL, NULL, ul_x, ul_y, skew_x, skew_y, $6);
+-- 	END;
+-- 	$$ LANGUAGE 'plpgsql' IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION st_asraster(
 	geom geometry,
 	ref raster,
@@ -1957,34 +1995,8 @@ CREATE OR REPLACE FUNCTION st_asraster(
 	touched boolean DEFAULT FALSE
 )
 	RETURNS raster
-	AS $$
-	DECLARE
-		g @extschema@.geometry;
-		g_srid integer;
-
-		ul_x double precision;
-		ul_y double precision;
-		scale_x double precision;
-		scale_y double precision;
-		skew_x double precision;
-		skew_y double precision;
-		sr_id integer;
-	BEGIN
-		SELECT upperleftx, upperlefty, scalex, scaley, skewx, skewy, srid INTO ul_x, ul_y, scale_x, scale_y, skew_x, skew_y, sr_id FROM @extschema@.ST_Metadata(ref);
-		--RAISE NOTICE '%, %, %, %, %, %, %', ul_x, ul_y, scale_x, scale_y, skew_x, skew_y, sr_id;
-
-		-- geometry and raster has different SRID
-		g_srid := @extschema@.ST_SRID(geom);
-		IF g_srid != sr_id THEN
-			RAISE NOTICE 'The geometry''s SRID (%) is not the same as the raster''s SRID (%).  The geometry will be transformed to the raster''s projection', g_srid, sr_id;
-			g := @extschema@.ST_Transform(geom, sr_id);
-		ELSE
-			g := geom;
-		END IF;
-
-		RETURN @extschema@._ST_asraster(g, scale_x, scale_y, NULL, NULL, $3, $4, $5, NULL, NULL, ul_x, ul_y, skew_x, skew_y, $6);
-	END;
-	$$ LANGUAGE 'plpgsql' IMMUTABLE PARALLEL SAFE;
+	AS 'MODULE_PATHNAME', 'RASTER_asRaster_ref'
+	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION st_asraster(
 	geom geometry,
