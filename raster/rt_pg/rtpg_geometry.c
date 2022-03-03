@@ -1124,7 +1124,7 @@ Datum RASTER_asRaster_ref(PG_FUNCTION_ARGS)
 
 	InitFunctionCallInfoData(*___fcinfo, NULL, 15, InvalidOid, NULL, NULL);
 
-	elog(NOTICE, "REF: after declare");
+	// elog(NOTICE, "REF: after declare");
 
 	pgraster_ref = (rt_pgraster *)PG_DETOAST_DATUM(PG_GETARG_DATUM(1));
 	raster_ref = rt_raster_deserialize(pgraster_ref, TRUE);
@@ -1145,7 +1145,7 @@ Datum RASTER_asRaster_ref(PG_FUNCTION_ARGS)
 	skewX = rt_raster_get_x_skew(raster_ref);
 	skewY = rt_raster_get_y_skew(raster_ref);
 
-	elog(NOTICE, "REF: before forward call");
+	// elog(NOTICE, "REF: before forward call");
 
 	// 0
 	___fcinfo->args[0].value = PG_GETARG_DATUM(0);
