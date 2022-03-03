@@ -1039,6 +1039,7 @@ Datum RASTER_getPolygon(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(rtn);
 }
 
+/*
 static
 Datum
 DirectFunctionCall15Coll(PGFunction func, Datum arg1, Datum arg2,
@@ -1073,25 +1074,25 @@ DirectFunctionCall15Coll(PGFunction func, Datum arg1, Datum arg2,
 	fcinfo->args[8].isnull = false;
 	fcinfo->args[9].value = arg10;
 	fcinfo->args[9].isnull = false;
-	fcinfo->args[10].value = arg10;
+	fcinfo->args[10].value = arg11;
 	fcinfo->args[10].isnull = false;
-	fcinfo->args[11].value = arg10;
+	fcinfo->args[11].value = arg12;
 	fcinfo->args[11].isnull = false;
-	fcinfo->args[12].value = arg10;
+	fcinfo->args[12].value = arg13;
 	fcinfo->args[12].isnull = false;
-	fcinfo->args[13].value = arg10;
+	fcinfo->args[13].value = arg14;
 	fcinfo->args[13].isnull = false;
-	fcinfo->args[14].value = arg10;
+	fcinfo->args[14].value = arg15;
 	fcinfo->args[14].isnull = false;
 
 	result = (*func) (fcinfo);
 
-	/* Check for null result, since caller is clearly not expecting one */
 	if (fcinfo->isnull)
 		elog(ERROR, "function %p returned NULL", (void *) func);
 
 	return result;
 }
+*/
 
 /*
 CREATE OR REPLACE FUNCTION st_asraster(
@@ -1106,6 +1107,9 @@ CREATE OR REPLACE FUNCTION st_asraster(
 PG_FUNCTION_INFO_V1(RASTER_asRaster_ref);
 Datum RASTER_asRaster_ref(PG_FUNCTION_ARGS)
 {
+	LOCAL_FCINFO(___fcinfo, 15);
+	Datum		result;
+
 	rt_pgraster *pgraster_ref = NULL;
 	rt_raster raster_ref = NULL;
 	double scaleX;
@@ -1117,6 +1121,10 @@ Datum RASTER_asRaster_ref(PG_FUNCTION_ARGS)
 	// int32_t srid;
 	uint32_t width;
 	uint32_t height;
+
+	InitFunctionCallInfoData(*___fcinfo, NULL, 15, InvalidOid, NULL, NULL);
+
+	elog(NOTICE, "REF: after declare");
 
 	pgraster_ref = (rt_pgraster *)PG_DETOAST_DATUM(PG_GETARG_DATUM(1));
 	raster_ref = rt_raster_deserialize(pgraster_ref, TRUE);
@@ -1137,6 +1145,64 @@ Datum RASTER_asRaster_ref(PG_FUNCTION_ARGS)
 	skewX = rt_raster_get_x_skew(raster_ref);
 	skewY = rt_raster_get_y_skew(raster_ref);
 
+	elog(NOTICE, "REF: before forward call");
+
+	// 0
+	___fcinfo->args[0].value = PG_GETARG_DATUM(0);
+	___fcinfo->args[0].isnull = PG_ARGISNULL(0);
+	// 1
+	___fcinfo->args[1].value = scaleX;
+	___fcinfo->args[1].isnull = false;
+	// 2
+	___fcinfo->args[2].value = scaleY;
+	___fcinfo->args[2].isnull = false;
+	// 3
+	___fcinfo->args[3].value = width;
+	___fcinfo->args[3].isnull = false;
+	// 4
+	___fcinfo->args[4].value = height;
+	___fcinfo->args[4].isnull = false;
+	// 5
+	___fcinfo->args[5].value = PG_GETARG_DATUM(2);
+	___fcinfo->args[5].isnull = PG_ARGISNULL(2);
+	// 6
+	___fcinfo->args[6].value = PG_GETARG_DATUM(3);
+	___fcinfo->args[6].isnull = PG_ARGISNULL(3);
+	// 7
+	___fcinfo->args[7].value = PG_GETARG_DATUM(4);
+	___fcinfo->args[7].isnull = PG_ARGISNULL(4);
+	// 8
+	___fcinfo->args[8].value = ipX;
+	___fcinfo->args[8].isnull = false;
+	// 9
+	___fcinfo->args[9].value = ipY;
+	___fcinfo->args[9].isnull = false;
+	// 10
+	___fcinfo->args[10].value = (Datum)0;
+	___fcinfo->args[10].isnull = true;
+	// 11
+	___fcinfo->args[11].value = (Datum)0;
+	___fcinfo->args[11].isnull = true;
+	// 12
+	___fcinfo->args[12].value = skewX;
+	___fcinfo->args[12].isnull = false;
+	// 13
+	___fcinfo->args[13].value = skewY;
+	___fcinfo->args[13].isnull = false;
+	// 14
+	___fcinfo->args[14].value = PG_GETARG_DATUM(5);
+	___fcinfo->args[14].isnull = PG_ARGISNULL(5);
+
+	result = (*RASTER_asRaster) (___fcinfo);
+
+	/* Check for null result, since caller is clearly not expecting one */
+	if (___fcinfo->isnull)
+		elog(ERROR, "function %p returned NULL", (void *) RASTER_asRaster);
+	
+	return result;
+
+
+	/*
 	PG_RETURN_DATUM(DirectFunctionCall15Coll(
 		RASTER_asRaster,
 		PG_GETARG_DATUM(0), // geom
@@ -1155,25 +1221,26 @@ Datum RASTER_asRaster_ref(PG_FUNCTION_ARGS)
 		skewY, // PG_GETARG_DATUM(13), // skewy
 		PG_GETARG_DATUM(5) // touched
 	));
+	*/
 }
 
 /*
 CREATE OR REPLACE FUNCTION _st_asraster(
-	geom geometry,
-	scalex double precision DEFAULT 0,
-	scaley double precision DEFAULT 0,
-	width integer DEFAULT 0,
-	height integer DEFAULT 0,
-	pixeltype text[] DEFAULT ARRAY['8BUI']::text[],
-	value double precision[] DEFAULT ARRAY[1]::double precision[],
-	nodataval double precision[] DEFAULT ARRAY[0]::double precision[],
-	upperleftx double precision DEFAULT NULL,
-	upperlefty double precision DEFAULT NULL,
-	gridx double precision DEFAULT NULL,
-	gridy double precision DEFAULT NULL,
-	skewx double precision DEFAULT 0,
-	skewy double precision DEFAULT 0,
-	touched boolean DEFAULT FALSE
+	0 geom geometry,
+	1 scalex double precision DEFAULT 0,
+	2 scaley double precision DEFAULT 0,
+	3 width integer DEFAULT 0,
+	4 height integer DEFAULT 0,
+	5 pixeltype text[] DEFAULT ARRAY['8BUI']::text[],
+	6 value double precision[] DEFAULT ARRAY[1]::double precision[],
+	7 nodataval double precision[] DEFAULT ARRAY[0]::double precision[],
+	8 upperleftx double precision DEFAULT NULL,
+	9 upperlefty double precision DEFAULT NULL,
+	10 gridx double precision DEFAULT NULL,
+	11 gridy double precision DEFAULT NULL,
+	12 skewx double precision DEFAULT 0,
+	13 skewy double precision DEFAULT 0,
+	14 touched boolean DEFAULT FALSE
 )
 	RETURNS raster
 	AS 'MODULE_PATHNAME', 'RASTER_asRaster'
