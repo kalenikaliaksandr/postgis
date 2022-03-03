@@ -1655,6 +1655,7 @@ Datum RASTER_asRaster(PG_FUNCTION_ARGS)
 			break;
 		}
 
+		elog(NOTICE, "scaleX: %f scaleY: %f", scale_x, scale_y);
 		/* scale and dimension provided */
 		if (
 			(scale_x != NULL && scale_y != NULL) &&
