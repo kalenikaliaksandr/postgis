@@ -1158,10 +1158,10 @@ Datum RASTER_asRaster_ref(PG_FUNCTION_ARGS)
 	___fcinfo->args[2].isnull = false;
 	// 3
 	___fcinfo->args[3].value = (Datum)0;
-	___fcinfo->args[3].isnull = true;
+	___fcinfo->args[3].isnull = false;
 	// 4
 	___fcinfo->args[4].value = (Datum)0;
-	___fcinfo->args[4].isnull = true;
+	___fcinfo->args[4].isnull = false;
 	// 5
 	___fcinfo->args[5].value = PG_GETARG_DATUM(2);
 	___fcinfo->args[5].isnull = PG_ARGISNULL(2);
