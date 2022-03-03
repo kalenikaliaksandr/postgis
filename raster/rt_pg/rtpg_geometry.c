@@ -1364,6 +1364,8 @@ Datum RASTER_asRaster(PG_FUNCTION_ARGS)
 		scale[0] = PG_GETARG_FLOAT8(1);
 		if (FLT_NEQ(scale[0], 0.0))
 			scale_x = &scale[0];
+	} else {
+		elog(NOTICE, ">>>PG_ARGISNULL for scale x");
 	}
 
 	/* scale y */
