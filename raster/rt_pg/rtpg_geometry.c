@@ -1157,11 +1157,11 @@ Datum RASTER_asRaster_ref(PG_FUNCTION_ARGS)
 	___fcinfo->args[2].value = scaleY;
 	___fcinfo->args[2].isnull = false;
 	// 3
-	___fcinfo->args[3].value = width;
-	___fcinfo->args[3].isnull = false;
+	___fcinfo->args[3].value = (Datum)0;
+	___fcinfo->args[3].isnull = true;
 	// 4
-	___fcinfo->args[4].value = height;
-	___fcinfo->args[4].isnull = false;
+	___fcinfo->args[4].value = (Datum)0;
+	___fcinfo->args[4].isnull = true;
 	// 5
 	___fcinfo->args[5].value = PG_GETARG_DATUM(2);
 	___fcinfo->args[5].isnull = PG_ARGISNULL(2);
@@ -1172,17 +1172,17 @@ Datum RASTER_asRaster_ref(PG_FUNCTION_ARGS)
 	___fcinfo->args[7].value = PG_GETARG_DATUM(4);
 	___fcinfo->args[7].isnull = PG_ARGISNULL(4);
 	// 8
-	___fcinfo->args[8].value = ipX;
-	___fcinfo->args[8].isnull = false;
+	___fcinfo->args[8].value = (Datum)0;
+	___fcinfo->args[8].isnull = true;
 	// 9
-	___fcinfo->args[9].value = ipY;
-	___fcinfo->args[9].isnull = false;
+	___fcinfo->args[9].value = (Datum)0;
+	___fcinfo->args[9].isnull = true;
 	// 10
-	___fcinfo->args[10].value = (Datum)0;
-	___fcinfo->args[10].isnull = true;
+	___fcinfo->args[10].value = ipX;
+	___fcinfo->args[10].isnull = false;
 	// 11
-	___fcinfo->args[11].value = (Datum)0;
-	___fcinfo->args[11].isnull = true;
+	___fcinfo->args[11].value = ipY;
+	___fcinfo->args[11].isnull = false;
 	// 12
 	___fcinfo->args[12].value = skewX;
 	___fcinfo->args[12].isnull = false;
