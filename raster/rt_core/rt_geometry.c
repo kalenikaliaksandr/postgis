@@ -1005,7 +1005,7 @@ rt_raster_gdal_polygonize(
 	double dBandNoData = 0.0;
 
 	/* for checking that a geometry is valid */
-	GEOSGeometry *ggeom = NULL;
+	// GEOSGeometry *ggeom = NULL;
 	int isValid;
 	LWGEOM *lwgeomValid = NULL;
 
@@ -1203,7 +1203,7 @@ rt_raster_gdal_polygonize(
 	}
 
 	/* initialize GEOS */
-	initGEOS(rtinfo, lwgeom_geos_error);
+	// initGEOS(rtinfo, lwgeom_geos_error);
 
 	RASTER_DEBUGF(3, "storing polygons (%d)", nFeatureCount);
 
@@ -1265,35 +1265,35 @@ rt_raster_gdal_polygonize(
 			is geometry valid?
 			if not, try to make valid
 		*/
-		do {
-			ggeom = (GEOSGeometry *) LWGEOM2GEOS(lwgeom, 0);
-			if (ggeom == NULL) {
-				rtwarn("Cannot test geometry for validity");
-				break;
-			}
+		// do {
+		// 	ggeom = (GEOSGeometry *) LWGEOM2GEOS(lwgeom, 0);
+		// 	if (ggeom == NULL) {
+		// 		rtwarn("Cannot test geometry for validity");
+		// 		break;
+		// 	}
 
-			isValid = GEOSisValid(ggeom);
+		// 	isValid = GEOSisValid(ggeom);
 
-			GEOSGeom_destroy(ggeom);
-			ggeom = NULL;
+		// 	GEOSGeom_destroy(ggeom);
+		// 	ggeom = NULL;
 
-			/* geometry is valid */
-			if (isValid)
-				break;
+		// 	/* geometry is valid */
+		// 	if (isValid)
+		// 		break;
 
-			RASTER_DEBUG(3, "fixing invalid geometry");
+		// 	RASTER_DEBUG(3, "fixing invalid geometry");
 
-			/* make geometry valid */
-			lwgeomValid = lwgeom_make_valid(lwgeom);
-			if (lwgeomValid == NULL) {
-				rtwarn("Cannot fix invalid geometry");
-				break;
-			}
+		// 	/* make geometry valid */
+		// 	lwgeomValid = lwgeom_make_valid(lwgeom);
+		// 	if (lwgeomValid == NULL) {
+		// 		rtwarn("Cannot fix invalid geometry");
+		// 		break;
+		// 	}
 
-			lwgeom_free(lwgeom);
-			lwgeom = lwgeomValid;
-		}
-		while (0);
+		// 	lwgeom_free(lwgeom);
+		// 	lwgeom = lwgeomValid;
+		// }
+		// while (0);
 
 		/* save lwgeom */
 		pols[j].geom = lwgeom_as_lwpoly(lwgeom);
